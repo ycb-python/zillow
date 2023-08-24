@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .button {
+      background-color: transparent;
+      border: none;
+      font-size: 1rem;
+    }
+    .result {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- //=>>Form  -->
+  <div class="container mt-5">
+    <div id="inputFields" style="display:block">
+      <h1>Real Estate Search</h1>
+        <div class="mb-3">
+            <label for="taskName" class="form-label">Set Task Name</label>
+            <input type="text" class="form-control" id="taskName" placeholder="Enter task name" value="test">
+        </div>
+        <div class="mb-3">
+            <label for="address" class="form-label">Put in a Google Address/Location</label>
+            <input type="text" class="form-control" id="address" placeholder="Enter address" value="Derby,-KS">
+        </div>
+        <div class="mb-3">
+            <label for="radius" class="form-label">Radius (in mi)</label>
+            <input type="number" class="form-control" id="radius" placeholder="Enter radius" value="500">
+        </div>
+        <div class="row">
+            <div class="col">
+                <label for="minLotSize" class="form-label">Minimum Lot Size</label>
+                <input type="number" class="form-control" id="minLotSize" placeholder="Min lot size" value="0">
+            </div>
+            <div class="col">
+                <label for="maxLotSize" class="form-label">Maximum Lot Size</label>
+                <input type="number" class="form-control" id="maxLotSize" placeholder="Max lot size" value="100000">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <label for="minPrice" class="form-label">Minimum Price</label>
+                <input type="number" class="form-control" id="minPrice" placeholder="Min price" value="10000">
+            </div>
+            <div class="col">
+                <label for="maxPrice" class="form-label">Maximum Price</label>
+                <input type="number" class="form-control" id="maxPrice" placeholder="Max price" value="3000000">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="constructionCost" class="form-label">Construction Costs per Sq. Foot</label>
+            <input type="number" class="form-control" id="constructionCost" placeholder="Enter construction cost" value="1000">
+        </div>
+        <div class="mb-3">
+            <label for="maxLotCoverage" class="form-label">Max Lot Coverage</label>
+            <input type="number" class="form-control" id="maxLotCoverage" placeholder="Enter max lot coverage" value="50">
+        </div>
+        <div class="mb-3">
+            <label for="houseType" class="form-label">Kind of Houses</label>
+            <select class="form-select" id="houseType">
+                <option value="multi-family">Multi-Family</option>
+                <option value="condo">Condo</option>
+                <option value="single-family">Single Family</option>
+                <option value="lot">Lot</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="excludeProperties" class="form-label">Properties to Exclude from Search</label>
+            <textarea class="form-control" id="excludeProperties" rows="3" placeholder="Enter properties to exclude">condo,townhouse</textarea>
+        </div>
+        <button id="getDataButton" onclick="getData()" class="btn btn-primary">Search</button>
+      </div>
+      <div id="result" style="display: none;">
+        <button id="searchAgainButton" onclick="hideData()" class="btn btn-primary float-end">Search Again</button>
+        <h1>Real Estate Search For Sale</h1>
+        <button id="button" class="button">Max Price :0</button><br><br>
+        <button id="minprice" class="button">Min Price0</button><br><br>
+        <button id="mean" class="button">Mean :0</button><br><br>
+        <button id="median" class="button">Median :0</button><br><br>
+        <button id="hc" class="button">Difference Higest and Cheapest price: 0</button><br><br>
+        <button id="differenceSqftScale" class="button">Difference Sqft Scale :0</button><br><br>
+        <button id="profitPerSquareFoot" class="button">Potential profit per square foot :0</button><br><br>
+        <table id="propertyTable">
+          <tr>
+            <th>Type</th>
+            <th>image</th>
+            <th>price</th>
+            <th>Address</th>
+            <th>Area</th>
+            <th>Days online</th>
+            <th>Zillow Links</th>
+            <!-- Add more headers for additional properties -->
+          </tr>
+        </table>
+      </div>
+</div>
+<!-- /// End //// -->
+  <!-- <script src="data.js"></script> -->
+  <script>
+    
+    //Hide Data 
+    function hideData(){
+      inputFields.style.display="block";
+    } 
+    async function getData() {
+      var inputFields = document.getElementById('inputFields');
+      var results = document.getElementById('result');
+      var getDataButton = document.getElementById('getDataButton');
+      var listResults;
+      address =  document.getElementById('address').value;
+      radius = document.getElementById('radius').value;
+      min_lot_size = document.getElementById('minLotSize').value;
+      max_lot_size = document.getElementById('maxLotSize').value;
+      min_price = document.getElementById('minPrice').value;
+      max_price = document.getElementById('maxPrice').value;
+      construction_cost_per_sqft = document.getElementById('constructionCost').value;
+      max_lot_coverage = document.getElementById('maxLotCoverage').value;
+      var selectedIndex = document.getElementById('houseType').selectedIndex;
+      house_type = document.getElementById('houseType').options[selectedIndex].value;
+      exclude_properties = document.getElementById('excludeProperties').value;
+      map_west = -84.36232590551758;
+      map_east = -84.16148209448242;
+      map_south = 33.89577159630012;
+      map_north = 33.96670114674591;
+      var address = document.getElementById('address').value;
+      const api_key = '7253033a-a94f-49a0-b96c-4b4acbe05d19';
+      if (address !== '') {
+        getDataButton.textContent="Searching"        
+        const apiEndpoint = `https://app.scrapeak.com/v1/scrapers/zillow/listing?api_key=${api_key}&url=https://www.zillow.com/${address}/?searchQueryState=%7B%22pagination%22%3A%7B%7D%2C%22usersSearchTerm%22%3A%22${address}%22%2C%22mapBounds%22%3A%7B%22west%22%3A${map_west}%2C%22east%22%3A${map_east}%2C%22south%22%3A${map_south}%2C%22north%22%3A${map_north}%7D%2C%22regionSelection%22%3A%5B%7B%22regionId%22%3A71076%2C%22regionType%22%3A7%7D%5D%2C%22isMapVisible%22%3Atrue%2C%22filterState%22%3A%7B%22price%22%3A%7B%22min%22%3A${min_price}%2C%22max%22%3A${max_price}%7D%2C%22ah%22%3A%7B%22value%22%3Atrue%7D%2C%22lot%22%3A%7B%22min%22%3A${min_lot_size}%2C%22max%22%3A${max_lot_size}%7D%2C%22cc%22%3A%7B%22min%22%3A${construction_cost_per_sqft}%7D%2C%22lc%22%3A%7B%22max%22%3A${max_lot_coverage}%7D%2C%22sort%22%3A%7B%22value%22%3A%22globalrelevanceex%22%7D%7D%2C%22isListVisible%22%3Atrue%7D`;        
+        try {
+          const response = await fetch(apiEndpoint);
+          const data = await response.json();
+          if (data.data && data.data.cat1) {
+            listResults = data.data.cat1.searchResults.relaxedResults.length> 0?data.data.cat1.searchResults.relaxedResults : data.data.cat1.searchResults.listResults;
+            // Your data processing logic here
+            // Fetch data from the API
+            //Show Data Result and hide input
+            inputFields.style.display="none";
+            results.style.display="block";
+            getDataButton.textContent="Search"
+
+console.log(listResults);
+            function findPrice(records, minOrMax) {
+              if (records.length === 0) {
+                alert("Data not found");
+                return null; // Return null if the array is empty
+              }
+              let targetPrice = (minOrMax === "max") ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+              let targetProperty = null;
+              for (let i = 0; i < records.length; i++) {
+                if (records[i].hasOwnProperty('unformattedPrice') && typeof records[i].unformattedPrice === 'number') {
+                  if ((minOrMax === "max" && records[i].unformattedPrice > targetPrice) ||
+                    (minOrMax === "min" && records[i].unformattedPrice < targetPrice)) {
+                    targetPrice = records[i].unformattedPrice;
+                    targetProperty = records[i];
+                  }
+                }
+              }
+              return targetProperty;
+            }
+            //Extract number from String Function
+            function extractNumberFromString(inputString) {
+              console.log(inputString);
+              const convertedNumber = parseFloat(inputString.replace(/[^0-9\.]/g, ""));
+              if (!isNaN(convertedNumber)) {
+                return convertedNumber;
+              }
+              return null; // Return null if no number is found or if the conversion fails
+            }
+            //End Extract number from String Function
+            const maxRecord = findPrice(listResults, "max");
+            const minRecord = findPrice(listResults, "min");
+            const maxPrice = maxRecord?.unformattedPrice || "N/A";
+            const minPrice = minRecord?.unformattedPrice || "N/A";
+            const differenceSqftScale = maxRecord?.hdpData?.homeInfo.lotAreaValue - minRecord?.hdpData?.homeInfo.lotAreaValue +" "+ maxRecord?.hdpData?.homeInfo.lotAreaValue || "N/A";
+            //const differenceSqftScale = '123'
+            //Calculate mean
+            function calculateMeanPrice(properties) {
+              if (properties.length === 0) {
+                return null; // Return null if the array is empty
+              }
+              const sum = properties.reduce((accumulator, property) => accumulator + property.unformattedPrice, 0);
+              const meanPrice = sum / properties.length;
+              return meanPrice;
+            }
+            const meanPrice = calculateMeanPrice(listResults);
+            //Calculate Median
+            function calculateMedianPrice(properties) {
+              if (properties.length === 0) {
+                return null; // Return null if the array is empty
+              }
+              const sortedPrices = properties.map(property => property.unformattedPrice).sort((a, b) => a - b);
+              const middleIndex = Math.floor(sortedPrices.length / 2);
+              const medianPrice = sortedPrices.length % 2 === 0
+                ? (sortedPrices[middleIndex - 1] + sortedPrices[middleIndex]) / 2
+                : sortedPrices[middleIndex];
+              return medianPrice;
+            }
+            const medianPrice = calculateMedianPrice(listResults);
+            // calculate potential profit per square foot
+            function calculatePotentialProfit(property) {
+              const costPrice = 90000; // Replace with the actual cost price
+              if (!property.unformattedPrice || isNaN(property.unformattedPrice) || property.area === null || isNaN(property.area)) {
+                return null;
+              }
+              const potentialProfit = property.unformattedPrice - costPrice;
+              return potentialProfit;
+            }
+            function calculateProfitPerSquareFoot(property) {
+              const potentialProfit = calculatePotentialProfit(property);
+              if (potentialProfit === null || property.area === null) {
+                return null;
+              }
+              const profitPerSquareFoot = potentialProfit / property.area;
+              return profitPerSquareFoot;
+            }
+            for (const property of listResults) {
+              const profitPerSquareFoot = calculateProfitPerSquareFoot(property);
+              if (profitPerSquareFoot !== null) {
+                var profitPerSquareFoo = profitPerSquareFoot.toFixed(2);
+              } else {
+                console.log(`Property ${property.zpid}: Data missing, cannot calculate profit per sqft`);
+              }
+            }
+            document.getElementById('button').innerText = "Max Price :" + maxPrice
+            document.getElementById('minprice').innerText = "Min Price :" + minPrice;
+            document.getElementById('mean').innerText = "Mean Price :" + meanPrice;
+            document.getElementById('median').innerText = "Median Price :" + medianPrice;
+            document.getElementById('hc').innerText = "Difference Higest and Cheapest price :" + (maxPrice - minPrice);
+            document.getElementById('differenceSqftScale').innerText = "Difference Sqft Scale :" + differenceSqftScale;
+            document.getElementById('profitPerSquareFoot').innerText = "Potential profit per square foot :" + profitPerSquareFoo;
+            ///Show data in table ////////////
+            // Function to populate the table
+            function populateTable(data) {
+              const table = document.getElementById("propertyTable");
+              data.forEach((property) => {
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const image = document.createElement("img");
+                image.src = property.imgSrc;
+                image.alt = "Property Image";
+                image.style.width = "100px"; // Adjust image size as needed
+                cell2.appendChild(image);
+                const cell3 = row.insertCell(2);
+                const cell4 = row.insertCell(3);
+                const cell5 = row.insertCell(4);
+                const cell6 = row.insertCell(5);
+                const cell7 = row.insertCell(6);
+                cell1.innerHTML = property?.statusType || "N/A";
+                // cell2.innerHTML = property.imgSrc;
+                cell3.innerHTML = property.price || "N/A";
+                cell4.innerHTML = property.address || "N/A";
+                cell5.innerHTML = property.hdpData?.homeInfo.lotAreaValue+" "+property.hdpData?.homeInfo.lotAreaUnit || 'N/A';
+                cell6.innerHTML = property.variableData.text || 'N/A';
+                cell7.innerHTML = property.detailUrl || 'N/A';
+              });
+            }
+            // Call the function to populate the table
+            populateTable(listResults);
+          } else {
+            console.error('Invalid API response format');
+          }
+        } catch (error) {
+          
+          console.error('Error fetching data:', error);
+        }
+      } else {
+        alert('Please Enter address');
+      }
+    }
+  </script>
+</body>
+</html>
